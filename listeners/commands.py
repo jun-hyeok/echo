@@ -344,3 +344,91 @@ def meet(
             blocks=blocks,
             metadata=metadata,
         )
+
+
+from slack_bolt import Respond
+
+
+def poll(
+    body: Dict[str, Any],
+    logger: logging.Logger,
+    command: Dict[str, Any],
+    ack: Ack,
+    say: Say,
+    respond: Respond,
+):
+    """ """
+    logger.info(body)
+
+    ack()
+    user_id, text = get_values(command, ["user_id", "text"])
+    convert = [
+        ":zero:",
+        ":one:",
+        ":two:",
+        ":three:",
+        ":four:",
+        ":five:",
+        ":six:",
+        ":seven:",
+        ":eight:",
+        ":nine:",
+    ]
+    if "text" in command:
+        if chr(8220) not in command["text"] and '"' not in command["text"]:
+            respond(
+                text="Error, please use quotation marks to separate each item!",
+                replace_original=False,
+                delete_original=False,
+            )
+            return
+        message = (
+            command["text"].replace(chr(8221), '"').replace(chr(8220), '"').split('"')
+        )
+        message = [x for x in message if x != "" and x != " "]
+        question = message[0]
+        options = message[1:]
+
+        overflow = m.Section(
+            text=m.mrkdwn(text=question),
+            accessory=m.overflow(
+                action_id="title-and-menu",
+                options=[
+                    m.option(
+                        text=m.plain_text(
+                            text=":information_source: 자세한 정보", emoji=True
+                        ),
+                        value="info",
+                    ),
+                    m.option(
+                        text=m.plain_text(text=":pushpin: 투표 종료", emoji=True),
+                        value="end_poll",
+                    ),
+                    m.option(
+                        text=m.plain_text(text=":x: 투표 취소", emoji=True),
+                        value="cancel_poll",
+                    ),
+                    m.option(
+                        text=m.plain_text(text=":house: 앱 홈", emoji=True),
+                        value="app_home",
+                    ),
+                    m.option(
+                        text=m.plain_text(text=":bar_chart: 새 투표 만들기", emoji=True),
+                        value="create_poll",
+                    ),
+                ],
+            ),
+        )
+
+        option = lambda option, button: m.Section(
+            text=m.mrkdwn(text=option),
+            accessory=m.button(
+                action_id="vote", text=m.plain_text(text=button, emoji=True)
+            ),
+        )
+
+        opts = (option(f"{i + 1}. {opt}", f"{i + 1}") for i, opt in enumerate(options))
+        context = m.Context(
+            elements=[m.mrkdwn(text=f"<@{user_id}>님이 `/poll`를 실행하였습니다.")]
+        )
+        say(blocks=[overflow, *opts, context])

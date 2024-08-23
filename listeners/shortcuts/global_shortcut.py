@@ -39,62 +39,39 @@ def poll(
             element=m.plain_text_input(action_id="input"),
         ),
         m.Input(
-            block_id="option_1",
-            label=m.plain_text(text="항목 1"),
-            element=m.plain_text_input(action_id="input"),
+            block_id="options",
+            label=m.plain_text(text="항목"),
+            element=m.plain_text_input(
+                action_id="input",
+                multiline=True,
+                placeholder=m.plain_text(text="항목을 입력하세요. (한 줄에 하나씩)"),
+            ),
         ),
-        m.Input(
-            block_id="option_2",
-            label=m.plain_text(text="항목 2"),
-            element=m.plain_text_input(action_id="input"),
-        ),
-        m.Input(
-            block_id="option_3",
-            label=m.plain_text(text="항목 3"),
-            element=m.plain_text_input(action_id="input"),
-            optional=True,
-        ),
-        m.Actions(
-            block_id="add_option",
-            elements=[
-                m.button(
-                    text=m.plain_text(text=":heavy_plus_sign: 항목 추가"),
-                    action_id="add_option",
-                    value="6.4",  # index and value of option_4
-                )
-            ],
-        ),
-        m.Divider(),
         m.Input(
             block_id="settings",
-            label=m.plain_text(text="설정"),
+            label=m.plain_text(text=" "),
             element=m.checkboxes(
                 action_id="checkboxes",
                 options=[
                     m.option(
-                        text=m.mrkdwn(text=":bust_in_silhouette: *익명으로 투표*"),
-                        value="1",
+                        text=m.plain_text(text="복수선택"),
+                        value="0b0001",
                     ),
                     m.option(
-                        text=m.mrkdwn(text=":heavy_plus_sign: *항목 추가 허용*"),
-                        value="2",
+                        text=m.plain_text(text="익명투표"),
+                        value="0b0010",
+                    ),
+                    m.option(
+                        text=m.plain_text(text="선택항목 추가 허용"),
+                        value="0b0100",
+                    ),
+                    m.option(
+                        text=m.plain_text(text="마감시간 설정"),
+                        value="0b1000",
                     ),
                 ],
             ),
             optional=True,
-        ),
-        m.Input(
-            block_id="limit",
-            label=m.plain_text(text="1인당 투표 수 제한"),
-            element=m.static_select(
-                action_id="select",
-                initial_option=m.option(text=m.plain_text(text="제한 없음"), value="0"),
-                options=[
-                    m.option(text=m.plain_text(text="제한 없음"), value="0"),
-                    m.option(text=m.plain_text(text="1표"), value="1"),
-                    m.option(text=m.plain_text(text="2표"), value="2"),
-                ],
-            ),
         ),
     ]
     client.views_open(

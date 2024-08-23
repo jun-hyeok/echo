@@ -17,6 +17,7 @@ def listen(app):
     app.command("/shuffle")(commands.rand)
     app.command("/choices")(commands.rand)
     app.command("/meet")(commands.meet)
+    app.command("/poll")(commands.poll)
 
     # shortcuts
     app.shortcut("delete_message", [is_echo])(message_shortcut.delete_message)
@@ -29,6 +30,7 @@ def listen(app):
     app.action("join_meet")(actions.join_meet)
     app.action("add_option")(actions.add_option)
     app.action("vote")(actions.vote)
+    app.action("poll_overflow")(actions.poll_overflow)
 
     # views
     app.view("preview_poll")(views.preview_poll)

@@ -14,7 +14,6 @@ def get_values(body: Dict[str, Any], values: Iterable[Any]) -> Any:
         body (dict): body of the request
         values (iterable): values to get from the body
     value:
-
     - actions (list : dict):
         - action_id (str): {action_id}
         - action_ts (str): [0-9]{10}.[0-9]{6}
@@ -192,7 +191,7 @@ def add_option(
     """
     logger.info(body)
 
-    index, value = map(int, action.get("value").split("."))
+    index, value = map(int, action.get("value").split("."))  # type: ignore
     option = m.Input(
         block_id=f"option_{value}",
         label=m.plain_text(text=f"항목 {value}"),
@@ -250,16 +249,75 @@ def vote(
     user_id = user.get("id")
     block_id = action.get("block_id")
 
+    block = dict()
     for block in blocks:
         if block["block_id"] == block_id:
             break
     state_value = block.get("text", {})
-    text = state_value.get("text")
+    option_text, count_text, users_text = state_value.get("text", "").split("`")
 
-    if user_id in text:
-        state_value.update(text=text.replace(f"<@{user_id}> ", ""))
+    if user_id in users_text:
+        users_text = users_text.replace(f"<@{user_id}> ", "")
     else:
-        state_value.update(text=text + f"<@{user_id}> ")
+        users_text += f"<@{user_id}> "
+    count_text = f"`{users_text.count('@')}`"
+    state_value.update(text=option_text + count_text + users_text)
 
     ack()
     respond(blocks=blocks)
+
+
+def poll_overflow(
+    body: Dict[str, Any],
+    logger: logging.Logger,
+    client: slack_sdk.web.client.WebClient,
+    action: Dict[str, Any],
+    ack: Ack,
+    respond: Respond,
+):
+    """
+    poll overflow
+    """
+    logger.info(body)
+    value = action["selected_option"]["value"]
+    ack()
+    return eval(f"{value}(body, client, respond)")
+
+
+def cancel_poll(
+    body: Dict[str, Any],
+    client: slack_sdk.web.client.WebClient,
+    respond: Respond,
+):
+    """
+    cancel poll
+    """
+    title = body["message"]["metadata"]["event_payload"].get("title")
+    respond(text=f":no_entry: 투표가 취소되었습니다.\n> ~*{title}*~")
+
+
+def end_poll(
+    body: Dict[str, Any],
+    client: slack_sdk.web.client.WebClient,
+    respond: Respond,
+):
+    """
+    end poll
+    """
+    message = body["message"]
+    blocks = message["blocks"]
+    ts = message["ts"]
+    metadata = message["metadata"]
+    channel = metadata["event_payload"].get("channel")
+
+    title = blocks[0]
+    title.pop("accessory")
+
+    options = blocks[2:-2]
+    for i, option in enumerate(options):
+        option.pop("accessory")
+    blocks.append(
+        m.Context(elements=[m.mrkdwn(text=f"<@{body['user']['id']}>님이 투표를 종료하였습니다.")])
+    )
+    respond(blocks=blocks)
+    # client.chat_update(channel=channel, ts=ts, blocks=blocks)
